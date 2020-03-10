@@ -1,0 +1,5 @@
+package testGit
+
+class scala {
+
+}
