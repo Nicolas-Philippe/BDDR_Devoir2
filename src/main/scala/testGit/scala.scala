@@ -1,5 +1,5 @@
 package testGit
 
 class scala {
-  print("Exo2")
+  print("Exo2.2")
 }
