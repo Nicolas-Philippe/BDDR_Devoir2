@@ -63,7 +63,7 @@ object freestyle extends App {
 
   println("taille de la liste : ", monstreList.length)
 
-  /*
+
   /*Traitement des doublons*/
 
   /*Récupération de tous les sorts d'un monstre*/
@@ -74,28 +74,35 @@ object freestyle extends App {
     var  html2 = Source.fromURL(elmt)
     val htmlString2 = html2.mkString
     /*Récupération du nom du monstre */
-    var indexNom = htmlString2.indexOf("monster-header") + "monster-header\">".length
-    var nomMonstre =  htmlString2.substring(indexNom, htmlString2.indexOf("</h1>", indexNom))
+    var indexNom = htmlString2.indexOf("<h1 id")
+    indexNom = htmlString2.indexOf(">", indexNom) + ">".length
+    var indexFin = htmlString2.indexOf("</h1>", indexNom)
+    var nomMonstre =  htmlString2.substring(indexNom,indexFin )
     println("nom monstre", nomMonstre)
+
+
     monstreArray(indexArrayMonstre) = new Monstre(nomMonstre)
-    /*Récupération des sorts du monstres*/
+
+
+    /*Récupération des sorts du monstres*/ //Attention il y a des doublons on verra plus tard
     var indexSpell = indexNom
     indexSpell = htmlString2.indexOf("/spells/",indexSpell)
-    println("indexSpell 1 : ", indexSpell)
+    //println("indexSpell 1 : ", indexSpell)
     while(indexSpell != -1){
 
-      indexSpell = htmlString2.indexOf("<em>",indexSpell)+ "<em>".length
-      println("indexSpell 2 : ", indexSpell)
-      var nomSpell = htmlString2.substring(indexSpell,htmlString2.indexOf("</em>",indexSpell))
+      indexSpell = htmlString2.indexOf(">",indexSpell) +">".length
+      //println("indexSpell 2 : ", indexSpell)
+      var nomSpell = htmlString2.substring(indexSpell,htmlString2.indexOf("</a>",indexSpell))
       //println("nom spell : ",nomSpell)
       monstreArray(indexArrayMonstre).addSpell(nomSpell)
       indexSpell = htmlString2.indexOf("/spells/",indexSpell)
-      println("indexSpell 3 : ", indexSpell)
+      //println("indexSpell 3 : ", indexSpell)
     }
 
-  }
 
-   */
+  }
+  println(monstreArray.length)
+
 
 }
 
