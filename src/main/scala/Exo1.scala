@@ -1,19 +1,13 @@
 import scala.io.Source
 import scala.io.Codec
 import java.nio.charset.CodingErrorAction
-
-import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.ListBuffer
 
-import org.apache.spark.sql.{Row, SparkSession}
-import org.apache.spark.sql.types.{BooleanType, StringType, StructField, StructType}
-import org.apache.spark.sql.DataFrame
-
 object freestyle extends App {
-  implicit val codec = Codec("UTF-8")
+  implicit val codec: Codec = Codec("UTF-8")
   codec.onMalformedInput(CodingErrorAction.REPLACE)
   codec.onUnmappableCharacter(CodingErrorAction.REPLACE)
 
@@ -64,7 +58,7 @@ object freestyle extends App {
       val addMonstre = new Monstre(monsterName,monsterLink)
 
       /*Permet de supprimer la classe global d'un montre si c'est sur la même page*/
-      if(monstreList.length > 0) {
+      if(monstreList.nonEmpty) {
         if (addMonstre.getName() contains (monstreList.last.getName())) {
           monstreList -= monstreList.last
         }
@@ -95,24 +89,46 @@ object freestyle extends App {
     val htmlString2 = html2.mkString
 
     /*Récupération des sorts du monstres*/ //Attention il y a des doublons on verra plus tard
-    var indexSpell = htmlString2.indexOf("<div class = \"body\">")
+    val debutString = "<h1 id=\""+elmt.getName()+"\""
+    var indexSpell = htmlString2.indexOf(debutString)
     indexSpell = htmlString2.indexOf("/spells/",indexSpell)
-    //println("indexSpell 1 : ", indexSpell)
-    while(indexSpell != -1){
+    var indexEndSpell =   htmlString2.indexOf("<h1>",indexSpell)
+    if(indexEndSpell == -1){
+      indexEndSpell = htmlString2.indexOf("<div class = \"footer\">",indexSpell)
+    }
 
-      indexSpell = htmlString2.indexOf(">",indexSpell) +">".length
-      val nomSpell = htmlString2.substring(indexSpell,htmlString2.indexOf("</a>",indexSpell))
+    while(indexSpell != -1 && (indexSpell < indexEndSpell )){
+
+      indexSpell = htmlString2.indexOf("#",indexSpell) +"#".length
+      val nomSpell = htmlString2.substring(indexSpell,htmlString2.indexOf("\"",indexSpell))
 
       elmt.addSpell(nomSpell)
       indexSpell = htmlString2.indexOf("/spells/",indexSpell)
 
     }
 
-    println(elmt)
+    println(elmt.getName())
   }
   //println(monstreArray.length)
 
+  for(elmt <- monstreList){
+    println("name : " + elmt.getName())
+    for(elmt2<- elmt.getSpells()){
+      print(" "+ elmt2 + ", ")
+    }
+    println()
+  }
   println(monstreList)
+
+  /*Transdormation de la liste en RDD*/
+  val conf = new SparkConf()
+    .setAppName("Spell Monstre")
+    .setMaster("local[*]")
+  val sc = new SparkContext(conf)
+  sc.setLogLevel("ERROR")
+
+  val resultatRDD = sc.makeRDD(monstreList) //met les data dans la rdd
+
 
 }
 
@@ -128,11 +144,15 @@ class Monstre(val name : String, val link : String) extends Serializable {
     spells += spell
   }
 
-  def getName() : String = {
+   def getName() : String = {
     return name
   }
   def getLink() : String = {
     return link
+  }
+
+  def getSpells() : ArrayBuffer[String] = {
+    return spells
   }
 
 }
