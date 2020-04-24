@@ -130,6 +130,22 @@ object freestyle extends App {
   val resultatRDD = sc.makeRDD(monstreList) //met les data dans la rdd
 
 
+  //Création d'une structure donnée avec les sorts d'un monstre puis son nom
+  resultatRDD.map(el => (el.getSpells(), el.name))
+
+  var newResult = resultatRDD.flatMap(crea => {
+    var list : List[(String,String)] = List()
+    //Création d'un élément de la liste pour chaque sort de chaque monstre: (Heal, Archange), (Résurrection, Archange) etc...
+    crea.getSpells().foreach(spell => list = list:+((spell, crea.name)))
+    list
+  })
+  // Pour chaque clé (sort) différentes,
+  // concatène les strings des monstres pour en faire un seul string pour chaque sort
+  var latestResult = newResult.reduceByKey((accum, n) => (accum + " | " + n))
+  //Affiche les résultats
+  latestResult.foreach(el => println(el._1 + " => " + el._2))
+
+
 }
 
 class Monstre(val name : String, val link : String) extends Serializable {
@@ -156,4 +172,6 @@ class Monstre(val name : String, val link : String) extends Serializable {
   }
 
 }
+
+
 
