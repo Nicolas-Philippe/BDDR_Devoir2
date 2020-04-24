@@ -24,91 +24,116 @@ object freestyle extends App {
   bestiaryArray(3) = "http://legacy.aonprd.com/bestiary4/monsterIndex.html"
   bestiaryArray(4) = "http://legacy.aonprd.com/bestiary5/index.html"
 
-  var monstreList = new ListBuffer[String]()
-  /*Récupération de tous les monstres dans tous les bestiaires*/
+  var monstreList = new ListBuffer[Monstre]()
+
+  /*Récupération de tous les liens de tous les monstres dans tous les bestiaires*/
   for( elmt <- bestiaryArray) {
+    /*Récupération de la page */
     val html = Source.fromURL(elmt)
     val htmlString = html.mkString
 
-    var indexBody = htmlString.indexOf("class=\"index\"")
-    indexBody = htmlString.indexOf("<a href=\"", indexBody)
-    val indexEnd = htmlString.indexOf("<div class = \"footer\">", indexBody)
+    /*Récupère l'indice du début du premier lien*/
+    var indexStartLink = htmlString.indexOf("class=\"index\"")
+    indexStartLink = htmlString.indexOf("<a href=\"", indexStartLink)
 
-    /*Récupération de tous les liens des monstres d'une page */
+    /*Indice qui signal la fin du bloc dans lequel on doit rechercher les liens des monstre*/
+    val indexEndSearch = htmlString.indexOf("<div class = \"footer\">", indexStartLink)
 
-    while(indexBody != -1 && indexBody < indexEnd ){
-      println("nouveau tour : ")
-      indexBody += "<a href=\"".length
 
-      var monsterLink = htmlString.substring(indexBody, htmlString.indexOf("\">", indexBody))
+    /*On s'arrête si on ne trouve plus de lien ou sinon n'est plus dans le bloc de recherche*/
+    while(indexStartLink != -1 && indexStartLink < indexEndSearch ){
 
-      println("monster link : ", monsterLink)
-      if(!monstreList.isEmpty){
-        /*Permet de supprimer la classe global d'un montre si c'est sur la même page*/
+      indexStartLink += "<a href=\"".length
+      val indexEndLink = htmlString.indexOf("\">", indexStartLink)
 
-         monsterLink = elmt+"/../"+monsterLink
-        if(monsterLink contains(monstreList.last)) {
-          monstreList-= monstreList.last
-        }
+      /*Récupère une partie du lien puis on la complete */
+      var monsterLink = htmlString.substring(indexStartLink, indexEndLink)
+      monsterLink = elmt+"/../"+monsterLink
+
+      /*Récupère le nom du monstre qui est contenu dans le lien trouvé précedement*/
+      var monsterName = ""
+      val indexName = htmlString.indexOf("#",indexStartLink)
+
+      /*Il y a deux type soit nomMonstre.html#nomMonstre-complet soit juste nomMonstre.html */
+      if(indexName > indexEndLink){
+        monsterName = htmlString.substring(indexStartLink, htmlString.indexOf(".html", indexStartLink))
       }else{
-        monsterLink = elmt+"/../"+monsterLink
+        monsterName = htmlString.substring(indexName+1, indexEndLink)
       }
 
-      monstreList += monsterLink
-      println(monstreList)
-      indexBody = htmlString.indexOf("<a href=\"", indexBody)
+      val addMonstre = new Monstre(monsterName,monsterLink)
+
+      /*Permet de supprimer la classe global d'un montre si c'est sur la même page*/
+      if(monstreList.length > 0) {
+        if (addMonstre.getName() contains (monstreList.last.getName())) {
+          monstreList -= monstreList.last
+        }
+      }
+
+      monstreList += addMonstre
+
+      /*Passe au lien suivant*/
+      indexStartLink = htmlString.indexOf("<a href=\"", indexStartLink)
+
     }
 
   }
+  println(monstreList)
+  println(monstreList.length)
+  //println("taille de la liste : ", monstreList.length)
 
-  println("taille de la liste : ", monstreList.length)
 
 
   /*Traitement des doublons*/
 
   /*Récupération de tous les sorts d'un monstre*/
-  var monstreArray = new Array[Monstre](monstreList.length)
+  //var monstreArray = new Array[Monstre](monstreLinkList.length)
   val indexArrayMonstre = 0
 
   for(elmt <- monstreList){
-    var  html2 = Source.fromURL(elmt)
+    val  html2 = Source.fromURL(elmt.getLink())
     val htmlString2 = html2.mkString
-    /*Récupération du nom du monstre */
-    var indexNom = htmlString2.indexOf("<h1 id")
-    indexNom = htmlString2.indexOf(">", indexNom) + ">".length
-    var indexFin = htmlString2.indexOf("</h1>", indexNom)
-    var nomMonstre =  htmlString2.substring(indexNom,indexFin )
-    println("nom monstre", nomMonstre)
-
-
-    monstreArray(indexArrayMonstre) = new Monstre(nomMonstre)
-
 
     /*Récupération des sorts du monstres*/ //Attention il y a des doublons on verra plus tard
-    var indexSpell = indexNom
+    var indexSpell = htmlString2.indexOf("<div class = \"body\">")
     indexSpell = htmlString2.indexOf("/spells/",indexSpell)
     //println("indexSpell 1 : ", indexSpell)
     while(indexSpell != -1){
 
       indexSpell = htmlString2.indexOf(">",indexSpell) +">".length
-      //println("indexSpell 2 : ", indexSpell)
-      var nomSpell = htmlString2.substring(indexSpell,htmlString2.indexOf("</a>",indexSpell))
-      //println("nom spell : ",nomSpell)
-      monstreArray(indexArrayMonstre).addSpell(nomSpell)
+      val nomSpell = htmlString2.substring(indexSpell,htmlString2.indexOf("</a>",indexSpell))
+
+      elmt.addSpell(nomSpell)
       indexSpell = htmlString2.indexOf("/spells/",indexSpell)
-      //println("indexSpell 3 : ", indexSpell)
+
     }
 
-
+    println(elmt)
   }
-  println(monstreArray.length)
+  //println(monstreArray.length)
 
+  println(monstreList)
 
 }
 
-class Monstre(val name : String) extends Serializable {
-  var spells =  ArrayBuffer[String]()
+class Monstre(val name : String, val link : String) extends Serializable {
+  private  var spells =  ArrayBuffer[String]()
+
+  override def  toString() : String = {
+    return "[name : " + name + ", link : " + link + "spells : "+ spells+ "]"
+
+  }
+
   def addSpell(spell : String) : Unit = {
     spells += spell
   }
+
+  def getName() : String = {
+    return name
+  }
+  def getLink() : String = {
+    return link
+  }
+
 }
+
