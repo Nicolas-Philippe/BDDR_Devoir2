@@ -5,6 +5,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.collection.mutable.ListBuffer
+import scala.util.control.Breaks._
 
 object freestyle extends App {
   implicit val codec: Codec = Codec("UTF-8")
@@ -93,6 +94,7 @@ object freestyle extends App {
     var indexSpell = htmlString2.indexOf(debutString)
     indexSpell = htmlString2.indexOf("/spells/",indexSpell)
     var indexEndSpell =   htmlString2.indexOf("<h1>",indexSpell)
+
     if(indexEndSpell == -1){
       indexEndSpell = htmlString2.indexOf("<div class = \"footer\">",indexSpell)
     }
@@ -101,8 +103,20 @@ object freestyle extends App {
 
       indexSpell = htmlString2.indexOf("#",indexSpell) +"#".length
       val nomSpell = htmlString2.substring(indexSpell,htmlString2.indexOf("\"",indexSpell))
+      var spellExistance = 0
+      breakable{
+        for(spell <- elmt.getSpells()){
+          if(spell == nomSpell){
+            spellExistance = 1
+            break
+          }
+        }
+      }
+      if(spellExistance==0){
+        elmt.addSpell(nomSpell)
+      }
 
-      elmt.addSpell(nomSpell)
+
       indexSpell = htmlString2.indexOf("/spells/",indexSpell)
 
     }
@@ -111,14 +125,14 @@ object freestyle extends App {
   }
   //println(monstreArray.length)
 
-  /*for(elmt <- monstreList){
-    println("name : " + elmt.getName())
+  for(elmt <- monstreList){
+    print(elmt.getName() + " => ")
     for(elmt2<- elmt.getSpells()){
-      print(" "+ elmt2 + ", ")
+      print(elmt2 + " | ")
     }
     println()
-  }*/
-  println(monstreList)
+  }
+  //println(monstreList)
 
   /*Transdormation de la liste en RDD*/
   val conf = new SparkConf()
@@ -143,7 +157,7 @@ object freestyle extends App {
   // concatène les strings des monstres pour en faire un seul string pour chaque sort
   var latestResult = newResult.reduceByKey((accum, n) => (accum + " | " + n))
   //Affiche les résultats
-  //latestResult.foreach(el => println(el._1 + " => " + el._2))
+  latestResult.foreach(el => println(el._1 + " => " + el._2))
 
 
 }
