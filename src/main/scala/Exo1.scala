@@ -72,8 +72,8 @@ object freestyle extends App {
     }
 
   }
-  println(monstreList)
-  println(monstreList.length)
+  //println(monstreList)
+  //println(monstreList.length)
   //println("taille de la liste : ", monstreList.length)
 
 
@@ -107,17 +107,17 @@ object freestyle extends App {
 
     }
 
-    println(elmt.getName())
+    //println(elmt.getName())
   }
   //println(monstreArray.length)
 
-  for(elmt <- monstreList){
+  /*for(elmt <- monstreList){
     println("name : " + elmt.getName())
     for(elmt2<- elmt.getSpells()){
       print(" "+ elmt2 + ", ")
     }
     println()
-  }
+  }*/
   println(monstreList)
 
   /*Transdormation de la liste en RDD*/
@@ -143,7 +143,7 @@ object freestyle extends App {
   // concatène les strings des monstres pour en faire un seul string pour chaque sort
   var latestResult = newResult.reduceByKey((accum, n) => (accum + " | " + n))
   //Affiche les résultats
-  latestResult.foreach(el => println(el._1 + " => " + el._2))
+  //latestResult.foreach(el => println(el._1 + " => " + el._2))
 
 
 }
