@@ -21,7 +21,7 @@ object freestyle extends App {
 
   var monstreList = new ListBuffer[Monstre]()
 
-  /*Récupération de tous les liens de tous les monstres dans tous les bestiaires*/
+  /**Récupération de tous les liens de tous les monstres dans tous les bestiaires**/
   for( elmt <- bestiaryArray) {
     /*Récupération de la page */
     val html = Source.fromURL(elmt)
@@ -73,36 +73,28 @@ object freestyle extends App {
     }
 
   }
-  //println(monstreList)
-  //println(monstreList.length)
-  //println("taille de la liste : ", monstreList.length)
 
 
-
-  /*Traitement des doublons*/
-
-  /*Récupération de tous les sorts d'un monstre*/
-  //var monstreArray = new Array[Monstre](monstreLinkList.length)
-  val indexArrayMonstre = 0
+  /**Récupération de tous les sorts d'un monstre**/
 
   for(elmt <- monstreList){
     val  html2 = Source.fromURL(elmt.getLink())
     val htmlString2 = html2.mkString
 
-    /*Récupération des sorts du monstres*/ //Attention il y a des doublons on verra plus tard
-    val debutString = "<h1 id=\""+elmt.getName()+"\""
+   val debutString = "<h1 id=\""+elmt.getName()+"\""
     var indexSpell = htmlString2.indexOf(debutString)
     indexSpell = htmlString2.indexOf("/spells/",indexSpell)
     var indexEndSpell =   htmlString2.indexOf("<h1>",indexSpell)
-
+    /*détermine la fin des sorts d'un monstre*/
     if(indexEndSpell == -1){
       indexEndSpell = htmlString2.indexOf("<div class = \"footer\">",indexSpell)
     }
-
+    /*Récupération des sorts*/
     while(indexSpell != -1 && (indexSpell < indexEndSpell )){
 
       indexSpell = htmlString2.indexOf("#",indexSpell) +"#".length
       val nomSpell = htmlString2.substring(indexSpell,htmlString2.indexOf("\"",indexSpell))
+      /*ajoute les sorts que s'il n'est pas déjà présents*/
       var spellExistance = 0
       breakable{
         for(spell <- elmt.getSpells()){
@@ -116,15 +108,13 @@ object freestyle extends App {
         elmt.addSpell(nomSpell)
       }
 
-
+      /*passe au sort suivant*/
       indexSpell = htmlString2.indexOf("/spells/",indexSpell)
 
     }
-
-    //println(elmt.getName())
   }
-  //println(monstreArray.length)
 
+/*Affiche que le monstre avec ses sorts*/
   for(elmt <- monstreList){
     print(elmt.getName() + " => ")
     for(elmt2<- elmt.getSpells()){
@@ -132,7 +122,7 @@ object freestyle extends App {
     }
     println()
   }
-  //println(monstreList)
+
 
   /*Transdormation de la liste en RDD*/
   val conf = new SparkConf()
